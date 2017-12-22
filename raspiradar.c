@@ -7,6 +7,20 @@
 #define DEVNAME "/dev/ttyUSB1"
 #define BAUDRATE 921600
 
+#define BITS	6
+
+void dump (const unsigned char * buf, const unsigned int bytes)
+{	unsigned int i, j, n, m;
+	printf ("bytes: %u\n", bytes);
+	for (i = 0; i < bytes; i += (1<<BITS))
+	{	n = (i + (1<<BITS) <= bytes) ? (1<<BITS): (bytes&((1<<BITS)-1));
+		m = (1<<BITS) - n;
+		for (j = 0; j < n; j++)	printf ("%2.2x ", buf[i+j]);
+		for (j = 0; j < m; j++)	printf ("   ");
+		for (j = 0; j < n; j++)	printf ("%c",  ((buf[i+j] >= 0x20) && (buf[i+j] <= 0x7E)) ? buf[i+j]: '.');
+		for (j = 0; j < m; j++)	printf (" ");
+		printf ("\n");}}
+
 #define X2F(x,q)	((double)(x)/(double)(1<<(q)))
  
 void rdcb (void * param, const unsigned char * buf, const unsigned int siz)
