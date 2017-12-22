@@ -1,6 +1,7 @@
 #ifndef _PROTOCOL_H_
 #define _PROTOCOL_H_
 
+#include <stdint.h>
 #include <malloc.h>
 #include <memory.h>
 #include <string.h>
@@ -17,37 +18,37 @@ typedef enum _STATE
 //
 int bopen (const int siz);
 int bclose (const int h);
-int bsend (const int h, const char * buf, const unsigned __int32 num);
+int bsend (const int h, const char * buf, const uint32_t num);
 //
 STATE bwait (const int h);
 //
 void * get_header (const int h);
 void * get_data (const int h);
 //
-unsigned __int32 get_version (const int h);
-unsigned __int32 get_packet_length (const int h);
-unsigned __int32 get_platform (const int h);
-unsigned __int32 get_frame_number (const int h);
-unsigned __int32 get_clock_counter (const int h);
-unsigned __int32 get_number_of_objects (const int h);
-unsigned __int32 get_number_of_tlvs (const int h);
+uint32_t get_version (const int h);
+uint32_t get_packet_length (const int h);
+uint32_t get_platform (const int h);
+uint32_t get_frame_number (const int h);
+uint32_t get_clock_counter (const int h);
+uint32_t get_number_of_objects (const int h);
+uint32_t get_number_of_tlvs (const int h);
 //
-unsigned __int32 get_tlv_type (const int h, unsigned int idx);
-unsigned __int32 get_tlv_length (const int h, unsigned int idx);
-void * get_tlv_data (const int h, unsigned int idx);
+uint32_t get_tlv_type (const int h, uint32_t idx);
+uint32_t get_tlv_length (const int h, uint32_t idx);
+void * get_tlv_data (const int h, uint32_t idx);
 
 typedef struct _DSC001
-{	unsigned __int32 NumberOfObjects:16;
-	unsigned __int32 Qformat:16;
+{	uint32_t NumberOfObjects:16;
+	uint32_t Qformat:16;
 }	DSC001;
 
 typedef struct _OBJ001
-{	unsigned __int32 RangeIndex:16;
-	unsigned __int32 DopplerIndex:16;
-	unsigned __int32 PeakValue:16;
-	unsigned __int32 x:16;
-	unsigned __int32 y:16;
-	unsigned __int32 z:16;
+{	uint32_t RangeIndex:16;
+	uint32_t DopplerIndex:16;
+	uint32_t PeakValue:16;
+	uint32_t x:16;
+	uint32_t y:16;
+	uint32_t z:16;
 }	OBJ001;
 
 #endif	//	 _PROTOCOL_H_

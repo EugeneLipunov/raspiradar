@@ -9,43 +9,48 @@
 
 #include "serial.h"
 
-#define MAGIC __LINE__ 
+enum {MAGIC=__LINE__};
 
 typedef struct _CTX
 {	int magic;
 	int h;
-	pthread_t th;	//	thread handle
+	pthread_t th;
 	volatile COMMCB rdcb;
 	void * pParam;
 }	CTX;
   
  static CTX * get_ctx (int h)
  {	 CTX * ctx = (CTX *) h;
-	 if (ctx != 0 && ctx->magic == MAGIC) return ctx;
+	 if (ctx != 0 && ctx->magic == MAGIC) 
+		return ctx;
 	 return (CTX *) 0;}
 
-static void * comm_proc (CTX * ctx)
+void * comm_proc (void * ptr)
 {	enum {BUFFSIZE = 8192};
-	static int retval = 0;
+	unsigned char buf [BUFFSIZE];
+	static int retval;
+	CTX * ctx;
+	int size;
+	retval = 0;
+	ctx = (CTX *) ptr;
 	if (ctx == 0)
 		pthread_exit (&retval);
-	unsigned char buf [BUFFSIZE];
-	unsigned int size;
 	while (ctx->rdcb != 0)
 	{	size = BUFFSIZE;
-		if (size != 0 && comm_recv ((int) ctx, buf, size) != 0)
+		if (size != 0 && (size = comm_recv ((int) ctx, buf, size)) > 0)
 		{	if (size != 0 && ctx->rdcb != 0)
-			ctx->rdcb (ctx->pParam, buf, size);}}
+				ctx->rdcb (ctx->pParam, buf, size);}}
 	pthread_exit (&retval);}
  
 int comm_open (const char * devname, unsigned int baudrate, COMMCB rdcb, void * pParam, unsigned int rdInterval, unsigned int rdTimeout, unsigned int wrTimeoput)
-{	CTX * ctx;
+{	enum {OFLAGS=O_RDWR};
 	struct termios opt;
+	CTX * ctx;
 	if (devname == 0) return 0;
 	ctx= malloc (sizeof (CTX));
 	if (ctx == 0) return 0;
 	memset (ctx, 0, sizeof (CTX));
-	ctx->h = open (devname, O_RDWR | O_NOCTTY | O_NDELAY);
+	ctx->h = open (devname, OFLAGS);
 	if (ctx->h < 0)
 	{	free ((void *) ctx);
 		return 0;}
@@ -60,19 +65,21 @@ int comm_open (const char * devname, unsigned int baudrate, COMMCB rdcb, void * 
 		return 0;}
 	ctx->rdcb = rdcb;
 	ctx->magic = MAGIC;
-	pthread_create (&ctx->th, NULL, (void *) &comm_proc, (void *) ctx);
+	pthread_create (&ctx->th, NULL, comm_proc, (void *) ctx);
 	return (int) ctx;}
 
 int comm_recv (int h, void * buf, int size)
 {	CTX * ctx = get_ctx (h);
 	if (ctx != 0 && buf != 0 && size != 0)
-		return read (ctx->h, buf, size);
+		return read (ctx->h, buf, size);	
 	return 0;}
 
 void comm_close (int h)
 {	CTX * ctx = (CTX *) get_ctx (h);
+	void * msg;
 	if (ctx) 
-	{	ctx->rdcb;
+	{	ctx->rdcb = 0;
+		pthread_join (ctx->th, &msg);
 		free ((void *) ctx);
 		ctx = 0;}}
 

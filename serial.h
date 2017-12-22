@@ -6,4 +6,4 @@ int comm_open (const char * devname, unsigned int baudrate, COMMCB pRDCB, void *
 int comm_recv (int h, void * buf, int size);
 void comm_close (int h);
 
-#endif	_SERIAL_H_
+#endif
