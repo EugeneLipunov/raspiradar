@@ -6,25 +6,26 @@
 
 #define DEVNAME "/dev/ttyUSB1"
 #define BAUDRATE 921600
+
+#define X2F(x,q)	((double)(x)/(double)(1<<(q)))
  
 void rdcb (void * param, const unsigned char * buf, const unsigned int siz)
 {	int h = (int) param;
-	unsigned int i, n, frame;
+	uint32_t i, n, frame;
 	STATE state, oldstate = UNDEF;
 	if (buf == 0) return;
 	if (siz == 0) return;
 	bsend (h, (char *) buf, siz);	//	try to load all data into the backet
 	while ((state = bwait (h)) != oldstate)
-	{	double tmp_p, tmp_x, tmp_y;
-		__int16 tmp;
-		switch (state)
-		{	case NOSYNC: break;		
+	{	switch (state)
+		{	default:
+			case NOSYNC: break;		
 			case HDRRDY: break;		
 			case DATRDY:
 				n = get_number_of_tlvs (h);
 				frame = get_frame_number (h);
 				for (i = 0; i < n; i++)
-				{	unsigned int j, m, q;
+				{	uint32_t j, m, q;
 					DSC001 * pdsc;
 					OBJ001 * pobj;
 					if (get_tlv_type (h, i) != 1) continue;
@@ -36,13 +37,15 @@ void rdcb (void * param, const unsigned char * buf, const unsigned int siz)
 					q = pdsc->Qformat;
 					if (m == 0) continue;
 					for (j = 0; j < m; j++)
-					{	tmp = pobj[j].PeakValue;
+					{	double tmp_p, tmp_x, tmp_y;
+						int16_t tmp;
+						tmp = pobj[j].PeakValue;
 						tmp_p = X2F (tmp, q);
 						tmp = pobj[j].x;
 						tmp_x = X2F (tmp, q);
 						tmp = pobj[j].y;
 						tmp_y = X2F (tmp, q);
-						printf ("%2.2u: peak %2.2f, x:%2.2f, y:%2.2f\n", j, tmp_p, tmp_x, tmp_y);}
+						printf ("%4.4u:%2.2u: peak %2.2f, x:%2.2f, y:%2.2f\n", frame, j, tmp_p, tmp_x, tmp_y);}
 					break;}
 				break;}
 		oldstate = state;}}
