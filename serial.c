@@ -64,8 +64,10 @@ int comm_open (const char * devname, unsigned int baudrate, COMMCB rdcb, void * 
 	{	free ((void *) ctx);
 		return 0;}
 	ctx->rdcb = rdcb;
+	ctx->pParam = pParam;
 	ctx->magic = MAGIC;
-	pthread_create (&ctx->th, NULL, comm_proc, (void *) ctx);
+	if (rdcb != 0)
+		pthread_create (&ctx->th, NULL, comm_proc, (void *) ctx);
 	return (int) ctx;}
 
 int comm_recv (int h, void * buf, int size)

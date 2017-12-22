@@ -7,10 +7,10 @@
 #define DEVNAME "/dev/ttyUSB1"
 #define BAUDRATE 921600
 
-#define BITS	6
-
+#if 0
 void dump (const unsigned char * buf, const unsigned int bytes)
-{	unsigned int i, j, n, m;
+{	enum {BITS = 5};
+	unsigned int i, j, n, m;
 	printf ("bytes: %u\n", bytes);
 	for (i = 0; i < bytes; i += (1<<BITS))
 	{	n = (i + (1<<BITS) <= bytes) ? (1<<BITS): (bytes&((1<<BITS)-1));
@@ -20,6 +20,7 @@ void dump (const unsigned char * buf, const unsigned int bytes)
 		for (j = 0; j < n; j++)	printf ("%c",  ((buf[i+j] >= 0x20) && (buf[i+j] <= 0x7E)) ? buf[i+j]: '.');
 		for (j = 0; j < m; j++)	printf (" ");
 		printf ("\n");}}
+#endif
 
 #define X2F(x,q)	((double)(x)/(double)(1<<(q)))
  
@@ -29,7 +30,8 @@ void rdcb (void * param, const unsigned char * buf, const unsigned int siz)
 	STATE state, oldstate = UNDEF;
 	if (buf == 0) return;
 	if (siz == 0) return;
-	bsend (h, (char *) buf, siz);	//	try to load all data into the backet
+	//	try to load all data into the backet
+	bsend (h, (char *) buf, siz);	
 	while ((state = bwait (h)) != oldstate)
 	{	switch (state)
 		{	default:
@@ -67,10 +69,14 @@ void rdcb (void * param, const unsigned char * buf, const unsigned int siz)
 int main (int argc, char* argv [])
 {
 	int h;
+	int backet;
 	
-	h = comm_open (DEVNAME, 921600, &rdcb, 0, 5, 5, 5);
-	sleep (5);
+	backet = bopen (16*8192);
+	h = comm_open (DEVNAME, 921600, &rdcb, (void *) backet, 5, 5, 5);
+	sleep (1);
 	comm_close (h);
+	bclose(backet);
+	
 	printf("exit\n");
 	
 	return 0;
