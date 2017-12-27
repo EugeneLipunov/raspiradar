@@ -7,7 +7,7 @@
 #define DEVNAME "/dev/ttyUSB1"
 #define BAUDRATE 921600
 
-#if 0
+#if 1
 void dump (const unsigned char * buf, const unsigned int bytes)
 {	enum {BITS = 5};
 	unsigned int i, j, n, m;

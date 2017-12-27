@@ -43,7 +43,7 @@ void * comm_proc (void * ptr)
 	pthread_exit (&retval);}
  
 int comm_open (const char * devname, unsigned int baudrate, COMMCB rdcb, void * pParam, unsigned int rdInterval, unsigned int rdTimeout, unsigned int wrTimeoput)
-{	enum {OFLAGS=O_RDWR};
+{	enum {OFLAGS = O_RDWR | O_NOCTTY | O_SYNC};
 	struct termios opt;
 	CTX * ctx;
 	if (devname == 0) return 0;
