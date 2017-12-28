@@ -10,7 +10,7 @@ typedef unsigned char MAGIC [8];
 
 typedef struct _RADAR_HDR	//	36 bytes	header
 {	MAGIC Magic;				//	8 bytes		-> header sync
-	uint32_t  Version;			//	4 bytes		-> check the version
+	uint32_t Version;			//	4 bytes		-> check the version
 	uint32_t PacketLength;		//	4 bytes		-> packet's totoal size
 	uint32_t Platform;			//	4 bytes		= 0xA1443
 	uint32_t FrameNumber;		//	4 bytes
@@ -48,6 +48,7 @@ typedef	struct _BACKET
 static uint32_t move_head (BACKET * backet, const uint32_t chunk);
 
 ///////////////////////////////////////////////////////////////////////////////
+//	shift data block up
 
 static uint32_t move_head (BACKET * backet, uint32_t chunk)
 {	if (chunk > backet->bytes) chunk = backet->bytes;
@@ -100,17 +101,22 @@ STATE bwait (const int h)
 	{	switch (backet->state)
 		{	default:
 			case NOSYNC:
+				//	printf ("NOSYNC %u\n", backet->bytes);
 				while (backet->bytes >= sizeof(RADAR_HDR))
 				{	unsigned int i;
-					if (backet->buf [0] != magic[0])
+					//	if 1st item is not magic [0] scan until it would be magic [0] or buffers ends ...
+					if (backet->buf [0] != magic [0])
 					{	for (i = 1; i < backet->bytes && backet->buf [i] != magic[0]; i++);
 						move_head (backet, i);}
-				else
-				{	for (i = 1; i < sizeof (MAGIC) && backet->buf [i] == magic [i]; i++);
-					if (i < sizeof (MAGIC)) move_head (backet, i);
-					else 
-					{	backet->state = HDRRDY;
-						break;}}}
+					// if 1st item is magic [0] scan for magic [i]
+					else
+					{	for (i = 1; i < sizeof (MAGIC) && backet->buf [i] == magic [i]; i++);						
+						if (i < sizeof (MAGIC)) 
+						{	move_head (backet, i);}
+						else 
+						{	//	entire magic [i] is matching
+							backet->state = HDRRDY;
+							break;}}}
 				break;
 			case HDRRDY:
 				if (backet->bytes >= ((RADAR_HDR *) &(backet->buf[0]))->PacketLength)

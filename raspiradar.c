@@ -8,7 +8,7 @@
 #define BAUDRATE 921600
 
 #if 1
-void dump (const unsigned char * buf, const unsigned int bytes)
+void dump (void * param, const unsigned char * buf, const unsigned int bytes)
 {	enum {BITS = 5};
 	unsigned int i, j, n, m;
 	printf ("bytes: %u\n", bytes);
@@ -25,7 +25,8 @@ void dump (const unsigned char * buf, const unsigned int bytes)
 #define X2F(x,q)	((double)(x)/(double)(1<<(q)))
  
 void rdcb (void * param, const unsigned char * buf, const unsigned int siz)
-{	int h = (int) param;
+{	//	attach parser
+	int h = (int) param;	
 	uint32_t i, n, frame;
 	STATE state, oldstate = UNDEF;
 	if (buf == 0) return;
@@ -54,7 +55,7 @@ void rdcb (void * param, const unsigned char * buf, const unsigned int siz)
 					if (m == 0) continue;
 					for (j = 0; j < m; j++)
 					{	double tmp_p, tmp_x, tmp_y;
-						int16_t tmp;
+						int16_t tmp; 
 						tmp = pobj[j].PeakValue;
 						tmp_p = X2F (tmp, q);
 						tmp = pobj[j].x;
@@ -72,12 +73,14 @@ int main (int argc, char* argv [])
 	int backet;
 	
 	backet = bopen (16*8192);
-	h = comm_open (DEVNAME, 921600, &rdcb, (void *) backet, 5, 5, 5);
-	sleep (1);
-	comm_close (h);
-	bclose(backet);
 	
-	printf("exit\n");
+	h = comm_open (DEVNAME, B921600, 0, rdcb /* dump */, (void *) backet, 5, 5, 5);
+	
+	sleep (1);
+	
+	comm_close (h);
+	
+	bclose(backet);
 	
 	return 0;
 }

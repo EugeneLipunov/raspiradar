@@ -4,9 +4,6 @@
 #include <malloc.h>
 #include <memory.h>
 #include <pthread.h>
-#include <termios.h>
-#include <sys/ioctl.h>
-
 #include "serial.h"
 
 enum {MAGIC=__LINE__};
@@ -42,9 +39,10 @@ void * comm_proc (void * ptr)
 				ctx->rdcb (ctx->pParam, buf, size);}}
 	pthread_exit (&retval);}
  
-int comm_open (const char * devname, unsigned int baudrate, COMMCB rdcb, void * pParam, unsigned int rdInterval, unsigned int rdTimeout, unsigned int wrTimeoput)
+int comm_open (const char * devname, unsigned int speed, unsigned int parity, COMMCB rdcb, void * pParam, unsigned int rdInterval, unsigned int rdTimeout, unsigned int wrTimeoput)
 {	enum {OFLAGS = O_RDWR | O_NOCTTY | O_SYNC};
-	struct termios opt;
+	//	enum {OFLAGS = O_RDONLY};
+	struct termios tty;
 	CTX * ctx;
 	if (devname == 0) return 0;
 	ctx= malloc (sizeof (CTX));
@@ -54,13 +52,23 @@ int comm_open (const char * devname, unsigned int baudrate, COMMCB rdcb, void * 
 	if (ctx->h < 0)
 	{	free ((void *) ctx);
 		return 0;}
-	tcgetattr (ctx->h, &opt);
-	opt.c_cflag = baudrate | CS8 | CLOCAL | CREAD;
-	opt.c_iflag = IGNPAR;
-	opt.c_oflag = 0;
-	opt.c_lflag = 0;
+	tcgetattr (ctx->h, &tty);
+//	cfsetospeed (&tty, speed);
+//  cfsetispeed (&tty, speed);
+	tty.c_cflag = speed | CS8;
+	tty.c_iflag &= ~IGNBRK;         			// disable break processing
+    tty.c_lflag = 0;                			// no signaling chars, no echo
+	tty.c_oflag = 0;                			// no remapping, no delays
+	tty.c_cc[VMIN]  = 1;            			// read doesn't block
+	tty.c_cc[VTIME] = 1;            			// 1 second read timeout
+	tty.c_iflag &= ~(IXON | IXOFF | IXANY); 	// shut off xon/xoff ctrl
+	tty.c_cflag |= (CLOCAL | CREAD);			// ignore modem controls
+	tty.c_cflag &= ~(PARENB | PARODD);      	// shut off parity
+	tty.c_cflag |= parity;
+	tty.c_cflag &= ~CSTOPB;
+	tty.c_cflag &= ~CRTSCTS;
 	tcflush (ctx->h, TCIFLUSH);
-	if (tcsetattr (ctx->h, TCSANOW, &opt) != 0)
+	if (tcsetattr (ctx->h, TCSANOW, &tty) != 0)
 	{	free ((void *) ctx);
 		return 0;}
 	ctx->rdcb = rdcb;
