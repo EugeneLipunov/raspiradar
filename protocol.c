@@ -106,11 +106,11 @@ STATE bwait (const int h)
 				{	unsigned int i;
 					//	if 1st item is not magic [0] scan until it would be magic [0] or buffers ends ...
 					if (backet->buf [0] != magic [0])
-					{	for (i = 1; i < backet->bytes && backet->buf [i] != magic[0]; i++);
+					{	for (i = 1; i < backet->bytes && backet->buf [i] != magic[0]; i++) {};
 						move_head (backet, i);}
 					// if 1st item is magic [0] scan for magic [i]
 					else
-					{	for (i = 1; i < sizeof (MAGIC) && backet->buf [i] == magic [i]; i++);						
+					{	for (i = 1; i < sizeof (MAGIC) && backet->buf [i] == magic [i]; i++) {};						
 						if (i < sizeof (MAGIC)) 
 						{	move_head (backet, i);}
 						else 
