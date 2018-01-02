@@ -55,18 +55,13 @@ int comm_open (const char * devname, unsigned int speed, unsigned int parity, CO
 	tcgetattr (ctx->h, &tty);
 //	cfsetospeed (&tty, speed);
 //  cfsetispeed (&tty, speed);
-	tty.c_cflag = speed | CS8;
+	tty.c_cflag = speed | parity |CS8 | CLOCAL | CREAD;
 	tty.c_iflag &= ~IGNBRK;         			// disable break processing
     tty.c_lflag = 0;                			// no signaling chars, no echo
 	tty.c_oflag = 0;                			// no remapping, no delays
-	tty.c_cc[VMIN]  = 1;            			// read doesn't block
-	tty.c_cc[VTIME] = 1;            			// 1 second read timeout
+	tty.c_cc [VMIN]  = 1;            			// read doesn't block
+	tty.c_cc [VTIME] = 1;            			// 1 second read timeout
 	tty.c_iflag &= ~(IXON | IXOFF | IXANY); 	// shut off xon/xoff ctrl
-	tty.c_cflag |= (CLOCAL | CREAD);			// ignore modem controls
-	tty.c_cflag &= ~(PARENB | PARODD);      	// shut off parity
-	tty.c_cflag |= parity;
-	tty.c_cflag &= ~CSTOPB;
-	tty.c_cflag &= ~CRTSCTS;
 	tcflush (ctx->h, TCIFLUSH);
 	if (tcsetattr (ctx->h, TCSANOW, &tty) != 0)
 	{	free ((void *) ctx);
@@ -92,6 +87,3 @@ void comm_close (int h)
 		pthread_join (ctx->th, &msg);
 		free ((void *) ctx);
 		ctx = 0;}}
-
-
-

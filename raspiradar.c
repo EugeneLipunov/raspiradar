@@ -39,6 +39,10 @@ void rdcb (void * param, const unsigned char * buf, const unsigned int siz)
 			case NOSYNC: break;		
 			case HDRRDY: break;		
 			case DATRDY:
+				printf ("version: %x\n", get_version (h));
+				printf ("platform: %x\n", get_platform (h));
+				printf ("frame number: %u\n", get_frame_number (h));
+				printf ("clock counter: %8.8x\n", get_clock_counter (h));
 				n = get_number_of_tlvs (h);
 				frame = get_frame_number (h);
 				for (i = 0; i < n; i++)
